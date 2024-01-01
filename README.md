@@ -1,5 +1,13 @@
 # Stratton_Oakmont
 
+Face clustering application
+
+
+sam build
+sam package --template-file template.yaml --output-template-file pck.yml --s3-bucket find-face-code-build
+sam deploy --template-file pck.yml --region ap-south-1 --capabilities CAPABILITY_IAM --stack-name stratton-oakmont
+
+
 This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
 
 - hello_world - Code for the application's Lambda function.

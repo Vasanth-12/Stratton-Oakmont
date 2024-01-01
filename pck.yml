@@ -1,54 +1,52 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  Stratton_Oakmont
+Description: 'Stratton_Oakmont
 
   Sample SAM Template for Stratton_Oakmont
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+  '
 Globals:
   Function:
     Timeout: 900
     Tracing: Active
-    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
     LoggingConfig:
       LogFormat: JSON
   Api:
     TracingEnabled: true
-
 Resources:
-  # SQS
   FileUploadTriggerSQS:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: file-upload-trigger
       VisibilityTimeout: 960
-  # Lambda
+    Metadata:
+      SamResourceId: FileUploadTriggerSQS
   FileUploadTriggerLambda:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/
+      CodeUri: s3://find-face-code-build/2d0510a758d06616f6e08e1f948938da
       Handler: fileUploadTrigger.lambda_handler
       Runtime: python3.11
       Architectures:
       - x86_64
       Events:
         EventTrigger:
-          Type: SQS 
+          Type: SQS
           Properties:
-            Queue: !GetAtt FileUploadTriggerSQS.Arn
+            Queue:
+              Fn::GetAtt:
+              - FileUploadTriggerSQS
+              - Arn
             BatchSize: 10
             Enabled: false
-  # S3 to SQS Event notification
+    Metadata:
+      SamResourceId: FileUploadTriggerLambda
   ImageFolder:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: face-clustering-img-folder9598
-      #NotificationConfiguration:
-      #  QueueConfigurations:
-      #    - Event: s3:ObjectCreated:Put
-      #      Queue: !GetAtt FileUploadTriggerSQS.Arn
-
+    Metadata:
+      SamResourceId: ImageFolder
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
     Properties:
@@ -56,20 +54,23 @@ Resources:
         Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
       ResourceQuery:
         Type: CLOUDFORMATION_STACK_1_0
+    Metadata:
+      SamResourceId: ApplicationResourceGroup
   ApplicationInsightsMonitoring:
     Type: AWS::ApplicationInsights::Application
     Properties:
       ResourceGroupName:
         Ref: ApplicationResourceGroup
       AutoConfigurationEnabled: 'true'
-
+    Metadata:
+      SamResourceId: ApplicationInsightsMonitoring
 Outputs:
   FileUploadTriggerSQSOutput:
     Description: ARN of source queue
-    Value: 
-      Fn::GetAtt: 
-        - FileUploadTriggerSQS
-        - Arn
+    Value:
+      Fn::GetAtt:
+      - FileUploadTriggerSQS
+      - Arn
   ImageFolderOutput:
     Description: S3 Bucket Name
     Value:
